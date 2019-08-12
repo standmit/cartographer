@@ -25,7 +25,8 @@ namespace optimization {
 proto::OptimizationProblemOptions CreateOptimizationProblemOptions(
     common::LuaParameterDictionary* const parameter_dictionary) {
   proto::OptimizationProblemOptions options;
-  options.set_huber_scale(parameter_dictionary->GetDouble("huber_scale"));
+  options.set_huber_scale(
+      parameter_dictionary->GetDouble("huber_scale"));
   options.set_acceleration_weight(
       parameter_dictionary->GetDouble("acceleration_weight"));
   options.set_rotation_weight(
@@ -44,6 +45,8 @@ proto::OptimizationProblemOptions CreateOptimizationProblemOptions(
       parameter_dictionary->GetDouble("fixed_frame_pose_rotation_weight"));
   options.set_log_solver_summary(
       parameter_dictionary->GetBool("log_solver_summary"));
+  options.set_fix_z_in_3d(
+      parameter_dictionary->GetBool("fix_z_in_3d"));
   *options.mutable_ceres_solver_options() =
       common::CreateCeresSolverOptionsProto(
           parameter_dictionary->GetDictionary("ceres_solver_options").get());

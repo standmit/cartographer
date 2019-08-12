@@ -72,6 +72,7 @@ POSE_GRAPH = {
     fixed_frame_pose_translation_weight = 1e1,
     fixed_frame_pose_rotation_weight = 1e2,
     log_solver_summary = false,
+    fix_z_in_3d = false,
     ceres_solver_options = {
       use_nonmonotonic_steps = false,
       max_num_iterations = 50,
