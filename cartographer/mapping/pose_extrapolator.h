@@ -19,12 +19,17 @@
 
 #include <deque>
 #include <memory>
+#include <fstream>
+
+#include <boost/circular_buffer.hpp>
 
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/imu_tracker.h"
 #include "cartographer/sensor/imu_data.h"
 #include "cartographer/sensor/odometry_data.h"
 #include "cartographer/transform/rigid_transform.h"
+
+#include "least_squares_method.h"
 
 namespace cartographer {
 namespace mapping {
@@ -39,6 +44,14 @@ class PoseExtrapolator {
 
   PoseExtrapolator(const PoseExtrapolator&) = delete;
   PoseExtrapolator& operator=(const PoseExtrapolator&) = delete;
+
+  ~PoseExtrapolator()
+  {
+      if( f_save_dataset )
+      {
+          data_file_stream.close();
+      }
+  }
 
   static std::unique_ptr<PoseExtrapolator> InitializeWithImu(
       common::Duration pose_queue_duration, double imu_gravity_time_constant,
@@ -65,6 +78,7 @@ class PoseExtrapolator {
   Eigen::Quaterniond ExtrapolateRotation(common::Time time,
                                          ImuTracker* imu_tracker) const;
   Eigen::Vector3d ExtrapolateTranslation(common::Time time);
+  Eigen::Vector3d ExtrapolateTranslationFixed(common::Time time);
 
   const common::Duration pose_queue_duration_;
   struct TimedPose {
@@ -85,6 +99,19 @@ class PoseExtrapolator {
   std::deque<sensor::OdometryData> odometry_data_;
   Eigen::Vector3d linear_velocity_from_odometry_ = Eigen::Vector3d::Zero();
   Eigen::Vector3d angular_velocity_from_odometry_ = Eigen::Vector3d::Zero();
+
+  //! ntrlab
+  size_t _odometry_buffer_size;
+  boost::circular_buffer< sensor::OdometryData > _odometry_buffer;
+  lsm::LeastSquaresMethod _lsm;
+  Eigen::Vector3d linear_velocity_from_odometry_fixed_ = Eigen::Vector3d::Zero();
+  TimedPose cached_extrapolated_pose_fixed;
+
+  std::ofstream data_file_stream;
+  common::Time last_saved_time;
+  int64 first_time;
+  bool f_first_time_saved;
+  bool f_save_dataset;
 };
 
 }  // namespace mapping
