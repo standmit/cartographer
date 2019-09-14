@@ -112,6 +112,9 @@ class PoseExtrapolator {
   int64 first_time;
   bool f_first_time_saved;
   bool f_save_dataset;
+
+  transform::Rigid3d::Vector _used_a;
+  transform::Rigid3d::Vector _used_b;
 };
 
 }  // namespace mapping

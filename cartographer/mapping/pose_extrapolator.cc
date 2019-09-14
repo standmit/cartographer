@@ -17,6 +17,8 @@
 #include "cartographer/mapping/pose_extrapolator.h"
 
 #include <algorithm>
+#include <iomanip>
+#include <ostream>
 
 #include "cartographer/common/make_unique.h"
 #include "cartographer/transform/transform.h"
@@ -27,12 +29,16 @@
 namespace cartographer {
 namespace mapping {
 
-std::string vector_to_str( const transform::Rigid3d::Vector &vector )
+inline std::string vector_to_str( const transform::Rigid3d::Vector &vector )
 {
-    return std::to_string(vector.x())
-            + " " + std::to_string(vector.y())
-            + " " + std::to_string(vector.z());
+    std::ostringstream str;
+    str << std::setprecision( 10 );
+    str << vector.x() << " "
+        << vector.y() << " "
+        << vector.z();
+    return str.str();
 }
+
 
 PoseExtrapolator::PoseExtrapolator(const common::Duration pose_queue_duration,
                                    double imu_gravity_time_constant)
@@ -176,6 +182,9 @@ void PoseExtrapolator::AddOdometryData( const sensor::OdometryData& odometry_dat
 //    LOG(INFO) << "Initing coefficients by data";
     _lsm.setFirstTime( common::ToUniversal( _odometry_buffer.front().time ) );
     _lsm.initCoefficientsByOdometryData( _odometry_buffer );
+
+    _used_a = _lsm.getCoefficientA();
+    _used_b = _lsm.getCoefficientB();
 //    LOG(INFO) << "Receiving translation by time from LSM";
 
     transform::Rigid3d::Vector fix_translation_data_oldest = _lsm.getTranslateByTime( odometry_data_oldest.time );
@@ -204,8 +213,9 @@ transform::Rigid3d PoseExtrapolator::ExtrapolatePose(const common::Time time)
         cached_extrapolated_pose_ = TimedPose{time, transform::Rigid3d{translation, rotation}};
 
         //! ntrlab start
-        Eigen::Vector3d extrapolated_translation = ExtrapolateTranslationFixed(time);
-        const Eigen::Vector3d translation_fixed = extrapolated_translation + newest_timed_pose.pose.translation();
+//        Eigen::Vector3d extrapolated_translation = ExtrapolateTranslationFixed(time);
+//        const Eigen::Vector3d translation_fixed = extrapolated_translation + newest_timed_pose.pose.translation();
+        const Eigen::Vector3d translation_fixed = ExtrapolateTranslationFixed(time);
         cached_extrapolated_pose_fixed = TimedPose{time, transform::Rigid3d{translation_fixed, rotation}};
         //! ntrlab end
     }
@@ -257,6 +267,10 @@ transform::Rigid3d PoseExtrapolator::ExtrapolatePose(const common::Time time)
                          - common::ToUniversal( _odometry_buffer.front().time ) << " | "
                       << vector_to_str(it->pose.translation());
         }
+
+        LOG(INFO) << ". . . . . . . . . . . . . . . . . . . . . . . .";
+        LOG(INFO) << "Coefficient a =    " << vector_to_str(_used_a);
+        LOG(INFO) << "Coefficient b =    " << vector_to_str(_used_b);
 
         LOG(INFO) << ". . . . . . . . . . . . . . . . . . . . . . . .";
 
@@ -418,15 +432,16 @@ Eigen::Vector3d PoseExtrapolator::ExtrapolateTranslation(common::Time time)
 
 Eigen::Vector3d PoseExtrapolator::ExtrapolateTranslationFixed(common::Time time)
 {
-    const TimedPose& newest_timed_pose = timed_pose_queue_.back();
-    const double extrapolation_delta = common::ToSeconds(time - newest_timed_pose.time);
+//    const TimedPose& newest_timed_pose = timed_pose_queue_.back();
+//    const double extrapolation_delta = common::ToSeconds(time - newest_timed_pose.time);
 
-    if (_odometry_buffer.size() < 2)
-    {
-        return extrapolation_delta * linear_velocity_from_poses_;
-    }
+//    if (_odometry_buffer.size() < 2)
+//    {
+//        return extrapolation_delta * linear_velocity_from_poses_;
+//    }
 
-    return extrapolation_delta * linear_velocity_from_odometry_fixed_;
+//    return extrapolation_delta * linear_velocity_from_odometry_fixed_;
+    return _lsm.getTranslateByTime( time );
 }
 
 }  // namespace mapping

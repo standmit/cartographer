@@ -22,13 +22,6 @@ namespace cartographer
 namespace lsm
 {
 
-    inline bool isnanvector( const transform::Rigid3d::Vector &v )
-    {
-        return   std::isnan(v.x())
-              && std::isnan(v.y())
-              && std::isnan(v.z());
-    }
-
 class LeastSquaresMethod
 {
 public:
@@ -110,38 +103,16 @@ private:
     template<typename container>
     std::tuple<Vector3D, Vector3D> getLSMcoefficients(const container &data)
     {
-        auto Ex = double( sumByTime( data ) );
-        auto Ey = sumByTranslation( data );
-        auto Ex_pow_2 = double( sumByTimeSquare( data ) );
-        auto Exy = sumByTranslationAndTimeMultiplies( data );
+        double   Ex = double( sumByTime( data ) );
+        Vector3D Ey = sumByTranslation( data );
+        double   Ex_pow_2 = double( sumByTimeSquare( data ) );
+        Vector3D Exy = sumByTranslationAndTimeMultiplies( data );
 
-        int64 n = int64( data.size() );
+        double n = double( data.size() );
         auto a =  ( n * Exy - Ex * Ey )
                 / ( n * Ex_pow_2 - SQR(Ex) );
 
         auto b = ( Ey - a * Ex ) / n;
-
-        if( isnanvector(a) || isnanvector(b) || true )
-        {
-            LOG(INFO) << "LSM: a or b nan received:";
-            LOG(INFO) << "LSM: a: " << a.x() << " " << a.y() << " " << a.z();
-            LOG(INFO) << "LSM: b: " << b.x() << " " << b.y() << " " << b.z();
-            LOG(INFO) << "LSM: Coefficients:";
-            LOG(INFO) << "LSM: Ex:   " << Ex;
-            LOG(INFO) << "LSM: Ey:   " << Ey.x() << " " << Ey.y() << " " << Ey.z();
-            LOG(INFO) << "LSM: Ex^2: " << Ex_pow_2;
-            LOG(INFO) << "LSM: Exy:  " << Exy.x() << " " << Exy.y() << " " << Exy.z();
-            LOG(INFO) << "LSM: n:    " << n;
-
-            LOG(INFO) << "LSM: printing time array:";
-            for( auto it = data.begin(); it != data.end(); ++it )
-            {
-                LOG(INFO) << "LSM: " << common::ToUniversal(it->time) - _firstTime << " | "
-                          << it->pose.translation().x() << " "
-                          << it->pose.translation().y() << " "
-                          << it->pose.translation().z();
-            }
-        }
 
         return std::tuple<Vector3D, Vector3D>( a, b );
     }
