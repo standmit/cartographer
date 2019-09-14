@@ -91,9 +91,6 @@ class PoseExtrapolator {
   size_t _odometry_buffer_size;
   boost::circular_buffer< sensor::OdometryData > _odometry_buffer;
   lsm::LeastSquaresMethod _lsm;
-  common::Time last_saved_time;
-  int64 first_time;
-  bool f_first_time_saved;
   bool f_use_lsm;
 };
 

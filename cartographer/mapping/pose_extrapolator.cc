@@ -33,7 +33,6 @@ PoseExtrapolator::PoseExtrapolator(const common::Duration pose_queue_duration,
                                 transform::Rigid3d::Identity()},
       _odometry_buffer_size(5),
       _odometry_buffer(_odometry_buffer_size),
-      f_first_time_saved( false ),
       f_use_lsm(true)
 {}
 
