@@ -30,7 +30,12 @@ PoseExtrapolator::PoseExtrapolator(const common::Duration pose_queue_duration,
     : pose_queue_duration_(pose_queue_duration),
       gravity_time_constant_(imu_gravity_time_constant),
       cached_extrapolated_pose_{common::Time::min(),
-                                transform::Rigid3d::Identity()} {}
+                                transform::Rigid3d::Identity()},
+      _odometry_buffer_size(5),
+      _odometry_buffer(_odometry_buffer_size),
+      f_first_time_saved( false ),
+      f_use_lsm(true)
+{}
 
 std::unique_ptr<PoseExtrapolator> PoseExtrapolator::InitializeWithImu(
     const common::Duration pose_queue_duration,
@@ -129,14 +134,26 @@ void PoseExtrapolator::AddOdometryData(
   linear_velocity_from_odometry_ =
       orientation_at_newest_odometry_time *
       linear_velocity_in_tracking_frame_at_newest_odometry_time;
+
+  //! ntrlab start -------------------------------
+  //! initiating LSM with odometry data
+  _odometry_buffer.push_back( odometry_data );
+  _lsm.setFirstTime( common::ToUniversal( _odometry_buffer.front().time ) );
+  _lsm.initCoefficientsByOdometryData( _odometry_buffer );
+  //! ntrlab end ---------------------------------
+
 }
 
 transform::Rigid3d PoseExtrapolator::ExtrapolatePose(const common::Time time) {
   const TimedPose& newest_timed_pose = timed_pose_queue_.back();
   CHECK_GE(time, newest_timed_pose.time);
   if (cached_extrapolated_pose_.time != time) {
-    const Eigen::Vector3d translation =
-        ExtrapolateTranslation(time) + newest_timed_pose.pose.translation();
+    Eigen::Vector3d translation;
+    if(f_use_lsm){
+      translation = _lsm.getTranslateByTime(time);
+    } else {
+      translation = ExtrapolateTranslation(time) + newest_timed_pose.pose.translation();
+    }
     const Eigen::Quaterniond rotation =
         newest_timed_pose.pose.rotation() *
         ExtrapolateRotation(time, extrapolation_imu_tracker_.get());

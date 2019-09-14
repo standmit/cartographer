@@ -25,6 +25,7 @@
 #include "cartographer/sensor/imu_data.h"
 #include "cartographer/sensor/odometry_data.h"
 #include "cartographer/transform/rigid_transform.h"
+#include "cartographer/mapping/least_squares_method.h"
 
 namespace cartographer {
 namespace mapping {
@@ -85,6 +86,15 @@ class PoseExtrapolator {
   std::deque<sensor::OdometryData> odometry_data_;
   Eigen::Vector3d linear_velocity_from_odometry_ = Eigen::Vector3d::Zero();
   Eigen::Vector3d angular_velocity_from_odometry_ = Eigen::Vector3d::Zero();
+
+  //! ntrlab
+  size_t _odometry_buffer_size;
+  boost::circular_buffer< sensor::OdometryData > _odometry_buffer;
+  lsm::LeastSquaresMethod _lsm;
+  common::Time last_saved_time;
+  int64 first_time;
+  bool f_first_time_saved;
+  bool f_use_lsm;
 };
 
 }  // namespace mapping
