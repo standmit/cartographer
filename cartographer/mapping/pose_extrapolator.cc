@@ -168,7 +168,7 @@ transform::Rigid3d PoseExtrapolator::ExtrapolatePose(const common::Time time) {
       translation = Eigen::Vector3d{
                         translation.x(),
                         translation.y(),
-                        _odometry_buffer.back().pose.translation().z()
+                        odometry_data_.back().pose.translation().z()
                     };
     }
     //! coords fix section ended
