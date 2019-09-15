@@ -34,9 +34,9 @@ PoseExtrapolator::PoseExtrapolator(const common::Duration pose_queue_duration,
       _odometry_buffer_size(5),
       _odometry_buffer(_odometry_buffer_size),
       //! Important: odom flag must be false if required lsm  replacement
-      f_replace_z_with_lsm(true),
+      f_replace_z_with_lsm(false),
       //! Important: lsm  flag must be false if required odom replacement
-      f_replace_z_with_odom(false)
+      f_replace_z_with_odom(true)
       //! If both flags will be true or false, no replacements will be performed
 {}
 
