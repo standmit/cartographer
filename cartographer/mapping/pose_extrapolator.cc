@@ -37,6 +37,7 @@ PoseExtrapolator::PoseExtrapolator(const common::Duration pose_queue_duration,
       f_replace_z_with_lsm(true),
       //! Important: lsm  flag must be false if required odom replacement
       f_replace_z_with_odom(false)
+      //! If both flags will be true or false, no replacements will be performed
 {}
 
 std::unique_ptr<PoseExtrapolator> PoseExtrapolator::InitializeWithImu(
