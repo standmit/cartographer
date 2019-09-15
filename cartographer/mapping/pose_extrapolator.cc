@@ -147,11 +147,15 @@ transform::Rigid3d PoseExtrapolator::ExtrapolatePose(const common::Time time) {
   const TimedPose& newest_timed_pose = timed_pose_queue_.back();
   CHECK_GE(time, newest_timed_pose.time);
   if (cached_extrapolated_pose_.time != time) {
-    Eigen::Vector3d translation;
+    Eigen::Vector3d translation = ExtrapolateTranslation(time) + newest_timed_pose.pose.translation();
+    //! when we using lsm, replacing z coord with LSMed one
     if(f_use_lsm){
-      translation = _lsm.getTranslateByTime(time);
-    } else {
-      translation = ExtrapolateTranslation(time) + newest_timed_pose.pose.translation();
+      Eigen::Vector3d lsm_translation = _lsm.getTranslateByTime(time);
+      translation = Eigen::Vector3d{
+                        translation.x(),
+                        translation.y(),
+                        lsm_translation.z()
+                    };
     }
     const Eigen::Quaterniond rotation =
         newest_timed_pose.pose.rotation() *
