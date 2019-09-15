@@ -33,7 +33,8 @@ PoseExtrapolator::PoseExtrapolator(const common::Duration pose_queue_duration,
                                 transform::Rigid3d::Identity()},
       _odometry_buffer_size(5),
       _odometry_buffer(_odometry_buffer_size),
-      f_use_lsm(true)
+      f_replace_z_with_lsm(true),
+      f_replace_z_with_odom(false)
 {}
 
 std::unique_ptr<PoseExtrapolator> PoseExtrapolator::InitializeWithImu(
@@ -136,9 +137,11 @@ void PoseExtrapolator::AddOdometryData(
 
   //! ntrlab start -------------------------------
   //! initiating LSM with odometry data
-  _odometry_buffer.push_back( odometry_data );
-  _lsm.setFirstTime( common::ToUniversal( _odometry_buffer.front().time ) );
-  _lsm.initCoefficientsByOdometryData( _odometry_buffer );
+  if (f_replace_z_with_lsm) {
+      _odometry_buffer.push_back( odometry_data );
+      _lsm.setFirstTime( common::ToUniversal( _odometry_buffer.front().time ) );
+      _lsm.initCoefficientsByOdometryData( _odometry_buffer );
+  }
   //! ntrlab end ---------------------------------
 
 }
@@ -148,15 +151,25 @@ transform::Rigid3d PoseExtrapolator::ExtrapolatePose(const common::Time time) {
   CHECK_GE(time, newest_timed_pose.time);
   if (cached_extrapolated_pose_.time != time) {
     Eigen::Vector3d translation = ExtrapolateTranslation(time) + newest_timed_pose.pose.translation();
-    //! when we using lsm, replacing z coord with LSMed one
-    if(f_use_lsm){
+    //! coords fix section started
+    if(f_replace_z_with_lsm and !f_replace_z_with_odom){
+      //! when we using lsm, replacing z coord with LSMed one
       Eigen::Vector3d lsm_translation = _lsm.getTranslateByTime(time);
       translation = Eigen::Vector3d{
                         translation.x(),
                         translation.y(),
                         lsm_translation.z()
                     };
+    } else if (f_replace_z_with_odom and !f_replace_z_with_lsm) {
+      //! when we replacing raw z from odometry, take it from last received odom
+      Eigen::Vector3d lsm_translation = _lsm.getTranslateByTime(time);
+      translation = Eigen::Vector3d{
+                        translation.x(),
+                        translation.y(),
+                        _odometry_buffer.back().pose.translation().z()
+                    };
     }
+    //! coords fix section ended
     const Eigen::Quaterniond rotation =
         newest_timed_pose.pose.rotation() *
         ExtrapolateRotation(time, extrapolation_imu_tracker_.get());

@@ -91,7 +91,8 @@ class PoseExtrapolator {
   size_t _odometry_buffer_size;
   boost::circular_buffer< sensor::OdometryData > _odometry_buffer;
   lsm::LeastSquaresMethod _lsm;
-  bool f_use_lsm;
+  bool f_replace_z_with_lsm;
+  bool f_replace_z_with_odom;
 };
 
 }  // namespace mapping
