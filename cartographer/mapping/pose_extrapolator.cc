@@ -33,7 +33,9 @@ PoseExtrapolator::PoseExtrapolator(const common::Duration pose_queue_duration,
                                 transform::Rigid3d::Identity()},
       _odometry_buffer_size(5),
       _odometry_buffer(_odometry_buffer_size),
+      //! Important: odom flag must be false if required lsm  replacement
       f_replace_z_with_lsm(true),
+      //! Important: lsm  flag must be false if required odom replacement
       f_replace_z_with_odom(false)
 {}
 
