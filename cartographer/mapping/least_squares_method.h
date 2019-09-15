@@ -46,6 +46,21 @@ public:
         return _a * xTime + _b;
     }
 
+    Vector3D getVelocity() const
+    {
+        return _a;
+    }
+
+    Vector3D getCoefficientA() const
+    {
+        return _a;
+    }
+
+    Vector3D getCoefficientB() const
+    {
+        return _b;
+    }
+
 //! Private fields
 private:
     Vector3D _a;

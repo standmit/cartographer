@@ -243,6 +243,7 @@ LocalTrajectoryBuilder3D::AddAccumulatedRangeData( const common::Time time,
                                     initial_ceres_pose.rotation()
                                 );
     kScanMatcherResidualAngleMetric->Observe(residual_angle);
+    
     const transform::Rigid3d pose_estimate =
             matching_submap->local_pose() * pose_observation_in_submap;
     extrapolator_->AddPose(time, pose_estimate);
