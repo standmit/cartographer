@@ -162,7 +162,6 @@ transform::Rigid3d PoseExtrapolator::ExtrapolatePose(const common::Time time) {
                     };
     } else if (f_replace_z_with_odom and !f_replace_z_with_lsm) {
       //! when we replacing raw z from odometry, take it from last received odom
-      Eigen::Vector3d lsm_translation = _lsm.getTranslateByTime(time);
       translation = Eigen::Vector3d{
                         translation.x(),
                         translation.y(),
