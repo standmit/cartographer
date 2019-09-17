@@ -109,7 +109,7 @@ void PoseExtrapolator::AddOdometryData(
         odometry_data.time >= timed_pose_queue_.back().time);
   odometry_data_.push_back(odometry_data);
   TrimOdometryData();
-  if (odometry_data_.size() < 2) {
+  if (!has_odometry_data()) {
     return;
   }
   // TODO(whess): Improve by using more than just the last two odometry poses.
@@ -155,21 +155,23 @@ transform::Rigid3d PoseExtrapolator::ExtrapolatePose(const common::Time time) {
   if (cached_extrapolated_pose_.time != time) {
     Eigen::Vector3d translation = ExtrapolateTranslation(time) + newest_timed_pose.pose.translation();
     //! coords fix section started
-    if(f_replace_z_with_lsm and !f_replace_z_with_odom){
-      //! when we using lsm, replacing z coord with LSMed one
-      Eigen::Vector3d lsm_translation = _lsm.getTranslateByTime(time);
-      translation = Eigen::Vector3d{
-                        translation.x(),
-                        translation.y(),
-                        lsm_translation.z()
-                    };
-    } else if (f_replace_z_with_odom and !f_replace_z_with_lsm) {
-      //! when we replacing raw z from odometry, take it from last received odom
-      translation = Eigen::Vector3d{
-                        translation.x(),
-                        translation.y(),
-                        odometry_data_.back().pose.translation().z()
-                    };
+    if(has_odometry_data()) {
+      if(f_replace_z_with_lsm and !f_replace_z_with_odom){
+        //! when we using lsm, replacing z coord with LSMed one
+        Eigen::Vector3d lsm_translation = _lsm.getTranslateByTime(time);
+        translation = Eigen::Vector3d{
+                          translation.x(),
+                          translation.y(),
+                          lsm_translation.z()
+                      };
+      } else if (f_replace_z_with_odom and !f_replace_z_with_lsm) {
+        //! when we replacing raw z from odometry, take it from last received odom
+        translation = Eigen::Vector3d{
+                          translation.x(),
+                          translation.y(),
+                          odometry_data_.back().pose.translation().z()
+                      };
+      }
     }
     //! coords fix section ended
     const Eigen::Quaterniond rotation =
@@ -237,7 +239,7 @@ void PoseExtrapolator::AdvanceImuTracker(const common::Time time,
     imu_tracker->Advance(time);
     imu_tracker->AddImuLinearAccelerationObservation(Eigen::Vector3d::UnitZ());
     imu_tracker->AddImuAngularVelocityObservation(
-        odometry_data_.size() < 2 ? angular_velocity_from_poses_
+        odometry_data_.size() > 2 ? angular_velocity_from_poses_
                                   : angular_velocity_from_odometry_);
     return;
   }

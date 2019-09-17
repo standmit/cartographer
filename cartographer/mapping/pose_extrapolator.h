@@ -67,6 +67,11 @@ class PoseExtrapolator {
                                          ImuTracker* imu_tracker) const;
   Eigen::Vector3d ExtrapolateTranslation(common::Time time);
 
+  inline bool has_odometry_data() const
+  {
+      return odometry_data_.size() >= 2;
+  }
+
   const common::Duration pose_queue_duration_;
   struct TimedPose {
     common::Time time;
