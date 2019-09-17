@@ -239,7 +239,7 @@ void PoseExtrapolator::AdvanceImuTracker(const common::Time time,
     imu_tracker->Advance(time);
     imu_tracker->AddImuLinearAccelerationObservation(Eigen::Vector3d::UnitZ());
     imu_tracker->AddImuAngularVelocityObservation(
-        odometry_data_.size() > 2 ? angular_velocity_from_poses_
+        odometry_data_.size() < 2 ? angular_velocity_from_poses_
                                   : angular_velocity_from_odometry_);
     return;
   }
