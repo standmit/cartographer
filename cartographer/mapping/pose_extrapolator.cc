@@ -22,6 +22,8 @@
 #include "cartographer/transform/transform.h"
 #include "glog/logging.h"
 
+#define PASTE_Z_FROM_ODOM
+
 namespace cartographer {
 namespace mapping {
 
@@ -135,8 +137,17 @@ transform::Rigid3d PoseExtrapolator::ExtrapolatePose(const common::Time time) {
   const TimedPose& newest_timed_pose = timed_pose_queue_.back();
   CHECK_GE(time, newest_timed_pose.time);
   if (cached_extrapolated_pose_.time != time) {
-    const Eigen::Vector3d translation =
+    Eigen::Vector3d translation =
         ExtrapolateTranslation(time) + newest_timed_pose.pose.translation();
+#ifdef PASTE_Z_FROM_ODOM
+    if (odometry_data_.size() >= 2) {
+      translation = Eigen::Vector3d{
+                      translation.x(),
+                      translation.y(),
+                      odometry_data_.back().pose.translation().z()
+                    };
+    }
+#endif
     const Eigen::Quaterniond rotation =
         newest_timed_pose.pose.rotation() *
         ExtrapolateRotation(time, extrapolation_imu_tracker_.get());
